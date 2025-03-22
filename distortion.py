@@ -4,11 +4,13 @@ import random
 
 string = "Jhh8856"
 font = "./Noto_Sans/NotoSans-Bold.ttf"
-stringsize = 64
+stringsize = 56
+#stringsize = 104
 size = (480, 160)
+#size = (480, 320)
 random.seed = 0
 
-def noise_dots(im, size, count_w, count_l, count):
+def noise(im, size, count_w, count_l, count):
         dr = ImageDraw.Draw(im)
         #選兩個圖片邊邊上的點畫線
         while count_w:
@@ -50,7 +52,7 @@ def noise_ground(im, size, count):
 
         while count:
             #選擇兩個焦點
-            ex, ey = random.randint(0, int(19*size[0]/20)), random.randint(0, int(19*size[1]/20))
+            ex, ey = random.randint(0, int(9*size[0]/10)), random.randint(0, int(9*size[1]/10))
             #隨機選顏色
             r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
             #畫橢圓
@@ -61,24 +63,31 @@ def noise_ground(im, size, count):
         return im
 
 def draw_text(im, size, txt, font, txtsize):
-        a_float = random.randint(0, 30) * -1
-        b_float = random.randint(0, 30) * -1
+        #字串旋轉角度
+        a_float = random.randint(0, 20) * -1
+        b_float = random.randint(0, 20) * -1
         #字型
         f = ImageFont.truetype(font, txtsize)
         dr = ImageDraw.Draw(im)
         #自動尋找適合大小的文字方塊
-        left, top, right, bottom = dr.multiline_textbbox((1, 1), txt, font=f)
-        #空出一定的行距
+        left, top, right, bottom = dr.textbbox((1, 1), txt, font=f)
+        #print(left, top, right, bottom)
+        #行距
         center = (int(size[0]/2), int(size[1]/2))
-        dx = right-center[0]
-        dy = bottom-center[1]
+        dx = abs(right-center[0])
+        dy = abs(bottom-center[1])
+        #print(dx, dy)
+        dx1 = random.randint(0, dx)
+        dy1 = random.randint(0, dy)
         imtsize = (right+dx, bottom+dy)
 
         imt = Image.new('RGB', imtsize, color=(255, 255, 255))
         #先打底
         noise_ground(imt, imtsize, 15)
+        noise(imt, size, 5, 5, 30)
+        noise_curve(imt, size, 15)
         #再寫字
-        ImageDraw.Draw(imt).text((dx, dy), txt, font=f, fill=(0, 0, 0))
+        ImageDraw.Draw(imt).text((dx1, dy1), txt, font=f, fill=(0, 0, 0))
         #旋轉字體
         imt = imt.crop(imt.getbbox())
         imt = imt.rotate(random.uniform(a_float, b_float), Image.Resampling.BILINEAR, expand=True, fillcolor=(255, 255, 255))
@@ -103,7 +112,7 @@ def draw_text(im, size, txt, font, txtsize):
         #將原本的矩形文字映射到另一四邊形
         imt = imt.transform((right, bottom), Image.Transform.QUAD, data=data, fillcolor=(255, 255, 255))
         imt = imt.resize(size)
-        #已空出行距，自動向左上方對齊
+        #已空出行距，文字方塊自動向左上方對齊
         im.paste(imt)
         #count = 0
         #while count <= 6:
@@ -141,8 +150,8 @@ def croping(im, size):
 def generator(size, txt):
         im = Image.new('RGB', size=size, color=(255, 255, 255))
         im = draw_text(im, size, txt, font, stringsize)
-        im = noise_dots(im, size, 5, 5, 100)
-        im = noise_curve(im, size, 5)
+        noise(im, size, 5, 5, 30)
+        noise_curve(im, size, 15)
         #Lagacy
         #dr = ImageDraw.Draw(im)
         #for i in range(random.randint(8, 15)):
@@ -175,7 +184,7 @@ def blending(size, txt, alpha):
 
 #color = random_color(10, 200, random.randint(220, 255))
 #img = generator(size, string)
-img = blending(size, string, alpha=0.6)
+img = blending(size, string, alpha=0.4)
 
 imgnew = Image.new("RGB", size=size, color=(255, 255, 255))
 #imgnew = croping(img, size)
